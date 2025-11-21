@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.collections.FXCollections?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.quizsystem.ui.AddQuestionController" alignment="CENTER" spacing="10" maxWidth="400" layoutX="100" layoutY="20">
+    <Label text="Add Question" styleClass="title-label"/>
+    <TextField fx:id="quizIdField" promptText="Quiz ID" editable="false"/>
+    <TextArea fx:id="questionTextField" promptText="Question Text" prefHeight="100"/>
+    <TextField fx:id="optionAField" promptText="Option A"/>
+    <TextField fx:id="optionBField" promptText="Option B"/>
+    <TextField fx:id="optionCField" promptText="Option C"/>
+    <TextField fx:id="optionDField" promptText="Option D"/>
+    <ChoiceBox fx:id="correctAnswerChoiceBox" prefWidth="150"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Save Question" onAction="#handleAddQuestion" styleClass="button"/>
+        <Button text="Toggle Dark Mode" onAction="#toggleDarkMode" styleClass="button"/>
+        <Button text="Back to Dashboard" onAction="#handleBack" styleClass="button"/>
+    </HBox>
+    <Label fx:id="messageLabel" text="" wrapText="true" styleClass="error-label"/>
+</VBox>

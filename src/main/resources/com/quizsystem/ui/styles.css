@@ -1,0 +1,49 @@
+/* Light mode styles */
+.root {
+    -fx-font-family: "Arial";
+}
+
+.title-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+.button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
+.button:hover {
+    -fx-background-color: #45a049;
+}
+
+.error-label {
+    -fx-font-size: 12px;
+}
+
+.question-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: black;
+}
+
+.feedback-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: blue;
+}
+
+.list-view .list-cell {
+    -fx-text-fill: black;
+    -fx-background-color: white;
+}
+
+.list-view .list-cell:selected {
+    -fx-background-color: #d3d3d3; /* Light gray for selection */
+    -fx-text-fill: black; /* Ensure text is readable */
+}
+
+/* Ensure custom HBox content in ListCell is styled correctly */
+.list-view .list-cell:selected .label {
+    -fx-text-fill: black;
+}

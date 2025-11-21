@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.quizsystem.ui.ResultsController" alignment="CENTER" spacing="10" maxWidth="600" layoutX="100" layoutY="20">
+    <Label text="Quiz Results" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+    <Label fx:id="summaryLabel" text="Score: 0/0" style="-fx-font-size: 14;"/>
+    <ListView fx:id="resultsListView" prefHeight="400"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Back to Dashboard" onAction="#handleBackToDashboard"/>
+    </HBox>
+    <Label fx:id="messageLabel" text="" wrapText="true"/>
+</VBox>

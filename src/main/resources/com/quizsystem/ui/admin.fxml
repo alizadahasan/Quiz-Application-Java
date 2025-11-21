@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.quizsystem.ui.AdminController" alignment="CENTER" spacing="10" maxWidth="600" layoutX="100" layoutY="20">
+    <Label text="Admin Dashboard" styleClass="title-label"/>
+    <TextField fx:id="titleField" promptText="Quiz Title"/>
+    <TextArea fx:id="descriptionField" promptText="Quiz Description" prefHeight="100"/>
+    <TextField fx:id="timeLimitField" promptText="Time Limit (seconds)"/>
+    <Label text="Questions" style="-fx-font-size: 14;"/>
+    <VBox fx:id="questionsContainer" spacing="10" prefHeight="200"/>
+    <Button text="Add Question Field" onAction="#handleAddQuestionField" styleClass="button"/>
+    <Button text="Create Quiz" onAction="#handleCreateQuiz" styleClass="button"/>
+    <Label text="Quizzes" style="-fx-font-size: 14;"/>
+    <ListView fx:id="quizListView" prefHeight="150"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Add Question" onAction="#handleAddQuestion" styleClass="button"/>
+        <Button text="View Questions" onAction="#handleViewQuestions" styleClass="button"/>
+        <Button text="View Leaderboard" onAction="#handleViewLeaderboard" styleClass="button"/>
+        <Button text="View Analytics" onAction="#handleViewAnalytics" styleClass="button"/>
+        <Button text="Delete Quiz" onAction="#handleDeleteQuiz" styleClass="button"/>
+    </HBox>
+    <ListView fx:id="leaderboardListView" prefHeight="150"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Toggle Dark Mode" onAction="#toggleDarkMode" styleClass="button"/>
+        <Button text="Logout" onAction="#handleLogout" styleClass="button"/>
+    </HBox>
+    <Label fx:id="messageLabel" text="" wrapText="true" styleClass="error-label"/>
+</VBox>

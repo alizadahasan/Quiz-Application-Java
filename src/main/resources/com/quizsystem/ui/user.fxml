@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.quizsystem.ui.UserController" alignment="CENTER" spacing="10" maxWidth="600" layoutX="100" layoutY="50">
+    <Label text="User Dashboard" styleClass="title-label"/>
+    <Label text="Available Quizzes" style="-fx-font-size: 14;"/>
+    <ListView fx:id="quizListView" prefHeight="150"/>
+    <Label text="Quiz History" style="-fx-font-size: 14;"/>
+    <ListView fx:id="historyListView" prefHeight="150"/>
+    <Label text="Leaderboard" style="-fx-font-size: 14;"/>
+    <ListView fx:id="leaderboardListView" prefHeight="150"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Toggle Dark Mode" onAction="#toggleDarkMode" styleClass="button"/>
+        <Button text="Logout" onAction="#handleLogout" styleClass="button"/>
+    </HBox>
+    <Label fx:id="messageLabel" text="" wrapText="true" styleClass="error-label"/>
+</VBox>
