@@ -45,3 +45,6 @@ CREATE TABLE IF NOT EXISTS user_answers (
     FOREIGN KEY (result_id) REFERENCES results(result_id),
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
 );
+
+INSERT OR IGNORE INTO users (username, password, role, email)
+VALUES ('admin', 'admin123', 'admin', 'admin@quizsystem.local');

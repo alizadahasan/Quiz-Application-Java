@@ -6,8 +6,10 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import com.quizsystem.ui.LoginController;
+import com.quizsystem.util.DatabaseConnection;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * Main application class for launching the Quiz System JavaFX application.
@@ -22,6 +24,12 @@ public class MainApp extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws IOException {
+        try {
+            DatabaseConnection.initializeDatabase();
+        } catch (SQLException e) {
+            throw new IOException("Failed to initialize database", e);
+        }
+
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/login.fxml"));
         if (loader.getLocation() == null) {
             System.err.println("Error: login.fxml not found at /com/quizsystem/ui/login.fxml");

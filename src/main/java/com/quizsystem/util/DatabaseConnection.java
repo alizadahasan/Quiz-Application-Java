@@ -2,6 +2,8 @@ package com.quizsystem.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -19,7 +21,11 @@ public class DatabaseConnection {
      * @throws SQLException If a database connection error occurs.
      */
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL);
+        Connection connection = DriverManager.getConnection(DB_URL);
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute("PRAGMA foreign_keys = ON");
+        }
+        return connection;
     }
 
     /**
@@ -36,8 +42,8 @@ public class DatabaseConnection {
                     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT NOT NULL UNIQUE,
                     password TEXT NOT NULL,
-                    role TEXT NOT NULL,
-                    email TEXT
+                    role TEXT CHECK(role IN ('admin', 'user')) NOT NULL,
+                    email TEXT NOT NULL UNIQUE
                 )
             """);
 
@@ -74,7 +80,7 @@ public class DatabaseConnection {
                     result_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     quiz_id INTEGER,
                     user_id INTEGER,
-                    score INTEGER,
+                    score INTEGER NOT NULL,
                     completion_time TEXT,
                     FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id),
                     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -87,11 +93,63 @@ public class DatabaseConnection {
                     answer_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     result_id INTEGER,
                     question_id INTEGER,
-                    selected_answer TEXT,
+                    user_answer TEXT NOT NULL,
                     FOREIGN KEY (result_id) REFERENCES results(result_id),
                     FOREIGN KEY (question_id) REFERENCES questions(question_id)
                 )
             """);
+
+            ensureUserAnswerColumn(conn);
+            seedDefaultAdmin(conn);
+        }
+    }
+
+    /**
+     * Migrates databases created with the earlier selected_answer column name.
+     */
+    private static void ensureUserAnswerColumn(Connection conn) throws SQLException {
+        boolean hasUserAnswer = false;
+        boolean hasSelectedAnswer = false;
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("PRAGMA table_info(user_answers)")) {
+            while (rs.next()) {
+                String columnName = rs.getString("name");
+                if ("user_answer".equals(columnName)) {
+                    hasUserAnswer = true;
+                } else if ("selected_answer".equals(columnName)) {
+                    hasSelectedAnswer = true;
+                }
+            }
+        }
+
+        if (!hasUserAnswer) {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("ALTER TABLE user_answers ADD COLUMN user_answer TEXT");
+            }
+        }
+
+        if (hasSelectedAnswer) {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate("UPDATE user_answers SET user_answer = selected_answer WHERE user_answer IS NULL");
+            }
+        }
+    }
+
+    /**
+     * Creates the documented default administrator account for a fresh database.
+     */
+    private static void seedDefaultAdmin(Connection conn) throws SQLException {
+        String sql = """
+            INSERT OR IGNORE INTO users (username, password, role, email)
+            VALUES (?, ?, ?, ?)
+        """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, "admin");
+            stmt.setString(2, "admin123");
+            stmt.setString(3, "admin");
+            stmt.setString(4, "admin@quizsystem.local");
+            stmt.executeUpdate();
         }
     }
 }
