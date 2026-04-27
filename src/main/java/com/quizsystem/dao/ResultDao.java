@@ -22,29 +22,59 @@ public class ResultDao {
      * @throws SQLException If a database error occurs during creation.
      */
     public void createResult(Result result, List<Question> questions) throws SQLException {
-        String sql = "INSERT INTO results (user_id, quiz_id, score, completion_time) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1, result.getUserId());
-            stmt.setInt(2, result.getQuizId());
-            stmt.setInt(3, result.getScore());
-            stmt.setString(4, result.getCompletionTime());
-            stmt.executeUpdate();
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) {
-                result.setResultId(rs.getInt(1));
-            }
+        validateResult(result, questions);
 
-            // Save user answers
-            String answerSql = "INSERT INTO user_answers (result_id, question_id, user_answer) VALUES (?, ?, ?)";
-            try (PreparedStatement answerStmt = conn.prepareStatement(answerSql)) {
-                for (int i = 0; i < result.getUserAnswers().size(); i++) {
-                    answerStmt.setInt(1, result.getResultId());
-                    answerStmt.setInt(2, questions.get(i).getQuestionId());
-                    answerStmt.setString(3, result.getUserAnswers().get(i));
-                    answerStmt.executeUpdate();
+        String sql = "INSERT INTO results (user_id, quiz_id, score, completion_time) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                    stmt.setInt(1, result.getUserId());
+                    stmt.setInt(2, result.getQuizId());
+                    stmt.setInt(3, result.getScore());
+                    stmt.setString(4, result.getCompletionTime());
+                    stmt.executeUpdate();
+                    try (ResultSet rs = stmt.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            result.setResultId(rs.getInt(1));
+                        } else {
+                            throw new SQLException("Failed to retrieve generated result ID");
+                        }
+                    }
                 }
+
+                String answerSql = "INSERT INTO user_answers (result_id, question_id, user_answer) VALUES (?, ?, ?)";
+                try (PreparedStatement answerStmt = conn.prepareStatement(answerSql)) {
+                    for (int i = 0; i < result.getUserAnswers().size(); i++) {
+                        answerStmt.setInt(1, result.getResultId());
+                        answerStmt.setInt(2, questions.get(i).getQuestionId());
+                        answerStmt.setString(3, result.getUserAnswers().get(i));
+                        answerStmt.addBatch();
+                    }
+                    answerStmt.executeBatch();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
             }
+        }
+    }
+
+    private void validateResult(Result result, List<Question> questions) throws SQLException {
+        if (result == null) {
+            throw new SQLException("Result cannot be null");
+        }
+        if (result.getUserAnswers() == null) {
+            throw new SQLException("User answers cannot be null");
+        }
+        if (questions == null) {
+            throw new SQLException("Questions cannot be null");
+        }
+        if (result.getUserAnswers().size() != questions.size()) {
+            throw new SQLException("User answers count must match question count");
         }
     }
 

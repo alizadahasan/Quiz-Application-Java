@@ -47,7 +47,7 @@ public class QuestionDao {
      */
     public List<Question> getQuestionsByQuizId(int quizId) throws SQLException {
         List<Question> questions = new ArrayList<>();
-        String sql = "SELECT * FROM questions WHERE quiz_id = ?";
+        String sql = "SELECT * FROM questions WHERE quiz_id = ? ORDER BY question_id";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, quizId);
