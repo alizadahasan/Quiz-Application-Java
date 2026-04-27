@@ -44,7 +44,7 @@ public class QuizDao {
      */
     public List<Quiz> getAllQuizzes() throws SQLException {
         List<Quiz> quizzes = new ArrayList<>();
-        String sql = "SELECT * FROM quizzes";
+        String sql = "SELECT * FROM quizzes ORDER BY quiz_id";
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

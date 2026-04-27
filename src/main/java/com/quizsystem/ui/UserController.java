@@ -322,7 +322,9 @@ public class UserController {
         historyListView.getItems().clear();
         try (var conn = com.quizsystem.util.DatabaseConnection.getConnection();
              var stmt = conn.prepareStatement(
-                     "SELECT r.result_id, q.title, r.score, r.completion_time FROM results r JOIN quizzes q ON r.quiz_id = q.quiz_id WHERE r.user_id = ?")) {
+                     "SELECT r.result_id, q.title, r.score, r.completion_time "
+                             + "FROM results r JOIN quizzes q ON r.quiz_id = q.quiz_id "
+                             + "WHERE r.user_id = ? ORDER BY r.completion_time DESC, r.result_id DESC")) {
             stmt.setInt(1, userId);
             var rs = stmt.executeQuery();
             while (rs.next()) {
