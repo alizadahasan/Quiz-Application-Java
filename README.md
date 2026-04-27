@@ -40,6 +40,18 @@ mvn clean compile javafx:run
 
 ---
 
+## ✅ Testing
+
+Run the test suite with:
+
+```bash
+mvn test
+```
+
+The application creates the SQLite schema on startup. The same schema is available in `init.sql` for manual setup or inspection.
+
+---
+
 ## 🛠 Technologies & Dependencies
 
 * **Java 22**
