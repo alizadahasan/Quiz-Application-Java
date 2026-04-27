@@ -219,16 +219,13 @@ public class UserController {
      * @throws IOException If the quiz.fxml file cannot be loaded.
      */
     private void handleTakeQuiz(int quizId) throws IOException {
-        System.out.println("Attempting to load quiz.fxml for quizId: " + quizId);
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/quiz.fxml"));
         if (loader.getLocation() == null) {
             System.err.println("quiz.fxml not found at /com/quizsystem/ui/quiz.fxml");
             showMessage("Cannot load quiz form.", false);
             return;
         }
-        System.out.println("Loading FXML...");
         Parent root = loader.load();
-        System.out.println("Getting controller...");
         QuizController controller = loader.getController();
         controller.setMainStage(mainStage, mainScene);
         controller.setQuizId(quizId);

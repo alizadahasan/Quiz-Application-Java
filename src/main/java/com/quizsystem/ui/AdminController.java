@@ -469,7 +469,6 @@ public class AdminController {
      */
     @FXML
     private void handleLogout() throws IOException {
-        System.out.println("Logging out...");
         if (mainStage == null) {
             showMessage("Cannot load login form: stage not initialized.", false);
             System.err.println("Error: mainStage is null in handleLogout");

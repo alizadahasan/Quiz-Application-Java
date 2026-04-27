@@ -134,15 +134,16 @@ public class AddQuestionController {
     @FXML
     private void toggleDarkMode() {
         if (mainScene == null) return;
-        mainScene.getStylesheets().clear();
         boolean isDarkMode = mainScene.getStylesheets().contains(
                 getClass().getResource(DARK_CSS).toExternalForm()
         );
+        mainScene.getStylesheets().clear();
         String stylesheet = isDarkMode ? LIGHT_CSS : DARK_CSS;
         String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
         if (stylesheetPath != null) {
             mainScene.getStylesheets().add(stylesheetPath);
         }
+        showMessage("Dark mode " + (isDarkMode ? "disabled" : "enabled") + ".", true);
     }
 
     /**
