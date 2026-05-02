@@ -1,7 +1,6 @@
 package com.quizsystem.ui;
 
 import com.quizsystem.service.UserService;
-import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,7 +14,7 @@ import java.sql.SQLException;
 
 /**
  * Controller for the registration UI, handling user registration and navigation.
- * Manages user input for username, password, email, and role, and persists new users to the database.
+ * Manages user input for username, password, and email, and persists new users to the database.
  */
 public class RegisterController {
     /** Text field for entering the username. */
@@ -32,9 +31,6 @@ public class RegisterController {
 
     /** Text field for entering the email address. */
     @FXML private TextField emailField;
-
-    /** Choice box for selecting the user role (user or admin). */
-    @FXML private ChoiceBox<String> roleChoiceBox;
 
     /** Label for displaying success or error messages. */
     @FXML private Label messageLabel;
@@ -58,12 +54,10 @@ public class RegisterController {
     private final String DARK_CSS = "/com/quizsystem/ui/dark-mode.css";
 
     /**
-     * Initializes the controller, setting up the role choice box and password field visibility.
+     * Initializes the controller, setting up password field visibility.
      */
     @FXML
     public void initialize() {
-        roleChoiceBox.setItems(FXCollections.observableArrayList("user", "admin"));
-        roleChoiceBox.setValue("user");
         setupPasswordFieldsVisibility(false);
         passwordField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (passwordField.isFocused() || !showPasswordCheckBox.isSelected()) {
@@ -152,9 +146,9 @@ public class RegisterController {
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
         String email = emailField.getText().trim();
-        String role = roleChoiceBox.getValue();
+        String role = "user";
 
-        if (username.isEmpty() || password.isEmpty() || email.isEmpty() || role == null) {
+        if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
             showMessage("Please fill in all fields.", false);
             return;
         }
