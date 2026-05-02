@@ -1,6 +1,7 @@
 package com.quizsystem.ui;
 
 import com.quizsystem.service.UserService;
+import com.quizsystem.util.ThemeManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -44,15 +45,6 @@ public class RegisterController {
     /** Main scene for applying stylesheets. */
     private Scene mainScene;
 
-    /** Flag indicating if dark mode is enabled. */
-    private boolean isDarkMode = false;
-
-    /** Path to the light theme CSS file. */
-    private final String LIGHT_CSS = "/com/quizsystem/ui/styles.css";
-
-    /** Path to the dark theme CSS file. */
-    private final String DARK_CSS = "/com/quizsystem/ui/dark-mode.css";
-
     /**
      * Initializes the controller, setting up password field visibility.
      */
@@ -89,15 +81,7 @@ public class RegisterController {
      * @param scene The scene to apply stylesheets to.
      */
     private void applyStylesheets(Scene scene) {
-        if (scene == null) return;
-        scene.getStylesheets().clear();
-        String stylesheet = isDarkMode ? DARK_CSS : LIGHT_CSS;
-        String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
-        if (stylesheetPath != null) {
-            scene.getStylesheets().add(stylesheetPath);
-        } else {
-            System.err.println("Warning: " + stylesheet + " not found.");
-        }
+        ThemeManager.apply(scene);
     }
 
     /**
@@ -196,9 +180,8 @@ public class RegisterController {
      */
     @FXML
     private void toggleDarkMode() {
-        isDarkMode = !isDarkMode;
-        applyStylesheets(mainScene);
-        showMessage("Dark mode " + (isDarkMode ? "enabled" : "disabled") + ".", true);
+        ThemeManager.toggle(getActiveScene());
+        showMessage("Dark mode " + (ThemeManager.isDarkModeEnabled() ? "enabled" : "disabled") + ".", true);
     }
 
     /**
@@ -225,9 +208,17 @@ public class RegisterController {
      */
     private void prepareAndShowScene(Parent root) {
         Scene newScene = new Scene(root);
+        this.mainScene = newScene;
         applyStylesheets(newScene);
         mainStage.setScene(newScene);
         mainStage.setMaximized(true);
+    }
+
+    private Scene getActiveScene() {
+        if (mainStage != null && mainStage.getScene() != null) {
+            return mainStage.getScene();
+        }
+        return mainScene;
     }
 
     /**

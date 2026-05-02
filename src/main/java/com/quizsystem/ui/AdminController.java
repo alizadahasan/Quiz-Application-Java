@@ -4,6 +4,7 @@ import com.quizsystem.model.Quiz;
 import com.quizsystem.model.QuestionData;
 import com.quizsystem.service.QuizService;
 import com.quizsystem.service.QuestionService;
+import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -61,12 +62,6 @@ public class AdminController {
 
     /** Service for question-related database operations. */
     private QuestionService questionService;
-
-    /** Path to the light theme CSS file. */
-    private final String LIGHT_CSS = "/com/quizsystem/ui/styles.css";
-
-    /** Path to the dark theme CSS file. */
-    private final String DARK_CSS = "/com/quizsystem/ui/dark-mode.css";
 
     /** Counter for tracking the number of question fields added. */
     private int questionCount = 0;
@@ -133,18 +128,7 @@ public class AdminController {
      * @param scene The scene to apply stylesheets to.
      */
     private void applyStylesheets(Scene scene) {
-        if (scene == null) return;
-        scene.getStylesheets().clear();
-        boolean isDarkMode = mainScene != null && mainScene.getStylesheets().contains(
-                getClass().getResource(DARK_CSS).toExternalForm()
-        );
-        String stylesheet = isDarkMode ? DARK_CSS : LIGHT_CSS;
-        String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
-        if (stylesheetPath != null) {
-            scene.getStylesheets().add(stylesheetPath);
-        } else {
-            System.err.println("Warning: " + stylesheet + " not found");
-        }
+        ThemeManager.apply(scene);
     }
 
     /**
@@ -494,18 +478,8 @@ public class AdminController {
      */
     @FXML
     private void toggleDarkMode() {
-        boolean isDarkMode = mainScene.getStylesheets().contains(
-                getClass().getResource(DARK_CSS).toExternalForm()
-        );
-        mainScene.getStylesheets().clear();
-        String stylesheet = isDarkMode ? LIGHT_CSS : DARK_CSS;
-        String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
-        if (stylesheetPath != null) {
-            mainScene.getStylesheets().add(stylesheetPath);
-        } else {
-            System.err.println("Warning: " + stylesheet + " not found");
-        }
-        showMessage("Dark mode " + (isDarkMode ? "disabled" : "enabled") + ".", true);
+        ThemeManager.toggle(getActiveScene());
+        showMessage("Dark mode " + (ThemeManager.isDarkModeEnabled() ? "enabled" : "disabled") + ".", true);
     }
 
     /**
@@ -539,5 +513,12 @@ public class AdminController {
     private void showMessage(String message, boolean success) {
         messageLabel.setText(message);
         messageLabel.setStyle(success ? "-fx-text-fill: green;" : "-fx-text-fill: red;");
+    }
+
+    private Scene getActiveScene() {
+        if (mainStage != null && mainStage.getScene() != null) {
+            return mainStage.getScene();
+        }
+        return mainScene;
     }
 }

@@ -4,6 +4,7 @@ import com.quizsystem.model.Question;
 import com.quizsystem.model.Result;
 import com.quizsystem.service.QuestionService;
 import com.quizsystem.service.ResultService;
+import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -44,12 +45,6 @@ public class ResultsController {
     /** Service for question-related database operations. */
     private QuestionService questionService;
 
-    /** Path to the light theme CSS file. */
-    private final String LIGHT_CSS = "/com/quizsystem/ui/styles.css";
-
-    /** Path to the dark theme CSS file. */
-    private final String DARK_CSS = "/com/quizsystem/ui/dark-mode.css";
-
     /**
      * Initializes the controller, setting up the result and question services.
      */
@@ -87,18 +82,7 @@ public class ResultsController {
      * @param scene The scene to apply stylesheets to.
      */
     private void applyStylesheets(Scene scene) {
-        if (scene == null) return;
-        scene.getStylesheets().clear();
-        boolean isDarkMode = mainScene != null && mainScene.getStylesheets().contains(
-                getClass().getResource(DARK_CSS).toExternalForm()
-        );
-        String stylesheet = isDarkMode ? DARK_CSS : LIGHT_CSS;
-        String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
-        if (stylesheetPath != null) {
-            scene.getStylesheets().add(stylesheetPath);
-        } else {
-            System.err.println("Warning: " + stylesheet + " not found");
-        }
+        ThemeManager.apply(scene);
     }
 
     /**
@@ -152,23 +136,23 @@ public class ResultsController {
         }
         Parent root = loader.load();
         UserController controller = loader.getController();
-        controller.setMainStage(mainStage, mainScene);
         try {
             Result result = resultService.getResultById(resultId);
             if (result == null) {
                 showMessage("Cannot retrieve user ID for result.", false);
                 return;
             }
+            Scene newScene = new Scene(root);
+            controller.setMainStage(mainStage, newScene);
             controller.setUserId(result.getUserId());
+            applyStylesheets(newScene);
+            mainStage.setScene(newScene);
+            mainStage.setMaximized(true);
         } catch (SQLException e) {
             showMessage("Error retrieving user ID: " + e.getMessage(), false);
             System.err.println("SQLException in handleBackToDashboard: " + e.getMessage());
             return;
         }
-        Scene newScene = new Scene(root);
-        applyStylesheets(newScene);
-        mainStage.setScene(newScene);
-        mainStage.setMaximized(true);
     }
 
     /**
@@ -176,18 +160,8 @@ public class ResultsController {
      */
     @FXML
     private void toggleDarkMode() {
-        boolean isDarkMode = mainScene.getStylesheets().contains(
-                getClass().getResource(LIGHT_CSS).toExternalForm()
-        );
-        mainScene.getStylesheets().clear();
-        String stylesheet = isDarkMode ? DARK_CSS : LIGHT_CSS;
-        String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
-        if (stylesheetPath != null) {
-            mainScene.getStylesheets().add(stylesheetPath);
-        } else {
-            System.err.println("Warning: " + stylesheet + " not found");
-        }
-        showMessage("Dark mode " + (isDarkMode ? "enabled" : "disabled") + ".", true);
+        ThemeManager.toggle(getActiveScene());
+        showMessage("Dark mode " + (ThemeManager.isDarkModeEnabled() ? "enabled" : "disabled") + ".", true);
     }
 
     /**
@@ -199,5 +173,12 @@ public class ResultsController {
     private void showMessage(String message, boolean success) {
         messageLabel.setText(message);
         messageLabel.setStyle(success ? "-fx-text-fill: green;" : "-fx-text-fill: red;");
+    }
+
+    private Scene getActiveScene() {
+        if (mainStage != null && mainStage.getScene() != null) {
+            return mainStage.getScene();
+        }
+        return mainScene;
     }
 }

@@ -7,8 +7,10 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import com.quizsystem.ui.LoginController;
 import com.quizsystem.util.DatabaseConnection;
+import com.quizsystem.util.ThemeManager;
 
 import java.io.IOException;
+import java.net.URL;
 import java.sql.SQLException;
 
 /**
@@ -30,19 +32,15 @@ public class MainApp extends Application {
             throw new IOException("Failed to initialize database", e);
         }
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/login.fxml"));
-        if (loader.getLocation() == null) {
+        URL loginResource = getClass().getResource("/com/quizsystem/ui/login.fxml");
+        if (loginResource == null) {
             System.err.println("Error: login.fxml not found at /com/quizsystem/ui/login.fxml");
             throw new IOException("Cannot find login.fxml");
         }
+        FXMLLoader loader = new FXMLLoader(loginResource);
         Parent root = loader.load();
         Scene scene = new Scene(root, 800, 600); // Increased default size
-        String defaultStylesheet = getClass().getResource("/com/quizsystem/ui/styles.css").toExternalForm();
-        if (defaultStylesheet == null) {
-            System.err.println("Error: styles.css not found at /com/quizsystem/ui/styles.css");
-        } else {
-            scene.getStylesheets().add(defaultStylesheet);
-        }
+        ThemeManager.apply(scene);
 
         LoginController controller = loader.getController();
         controller.setMainStage(primaryStage, scene);

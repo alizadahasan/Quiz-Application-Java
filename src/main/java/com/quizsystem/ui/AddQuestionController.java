@@ -1,6 +1,7 @@
 package com.quizsystem.ui;
 
 import com.quizsystem.service.QuestionService;
+import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -52,12 +53,6 @@ public class AddQuestionController {
 
     /** Service for question-related database operations. */
     private QuestionService questionService;
-
-    /** Path to the light theme CSS file. */
-    private final String LIGHT_CSS = "/com/quizsystem/ui/styles.css";
-
-    /** Path to the dark theme CSS file. */
-    private final String DARK_CSS = "/com/quizsystem/ui/dark-mode.css";
 
     /**
      * Initializes the controller after FXML loading, setting up the QuestionService
@@ -133,17 +128,8 @@ public class AddQuestionController {
      */
     @FXML
     private void toggleDarkMode() {
-        if (mainScene == null) return;
-        boolean isDarkMode = mainScene.getStylesheets().contains(
-                getClass().getResource(DARK_CSS).toExternalForm()
-        );
-        mainScene.getStylesheets().clear();
-        String stylesheet = isDarkMode ? LIGHT_CSS : DARK_CSS;
-        String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
-        if (stylesheetPath != null) {
-            mainScene.getStylesheets().add(stylesheetPath);
-        }
-        showMessage("Dark mode " + (isDarkMode ? "disabled" : "enabled") + ".", true);
+        ThemeManager.toggle(getActiveScene());
+        showMessage("Dark mode " + (ThemeManager.isDarkModeEnabled() ? "enabled" : "disabled") + ".", true);
     }
 
     /**
@@ -169,18 +155,7 @@ public class AddQuestionController {
      * @param scene The scene to apply stylesheets to.
      */
     private void applyStylesheets(Scene scene) {
-        if (scene == null) return;
-        scene.getStylesheets().clear();
-        boolean isDarkMode = mainScene != null && mainScene.getStylesheets().contains(
-                getClass().getResource(DARK_CSS).toExternalForm()
-        );
-        String stylesheet = isDarkMode ? DARK_CSS : LIGHT_CSS;
-        String stylesheetPath = getClass().getResource(stylesheet).toExternalForm();
-        if (stylesheetPath != null) {
-            scene.getStylesheets().add(stylesheetPath);
-        } else {
-            System.err.println("Warning: " + stylesheet + " not found");
-        }
+        ThemeManager.apply(scene);
     }
 
     /**
@@ -204,5 +179,12 @@ public class AddQuestionController {
     private void showMessage(String message, boolean success) {
         messageLabel.setText(message);
         messageLabel.setStyle(success ? "-fx-text-fill: green;" : "-fx-text-fill: red;");
+    }
+
+    private Scene getActiveScene() {
+        if (mainStage != null && mainStage.getScene() != null) {
+            return mainStage.getScene();
+        }
+        return mainScene;
     }
 }
