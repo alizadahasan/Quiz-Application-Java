@@ -150,7 +150,7 @@ public class DatabaseConnection {
         """;
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, "admin");
-            stmt.setString(2, "admin123");
+            stmt.setString(2, PasswordUtils.hashPassword("admin123"));
             stmt.setString(3, "admin");
             stmt.setString(4, "admin@quizsystem.local");
             stmt.executeUpdate();

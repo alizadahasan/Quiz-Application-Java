@@ -2,6 +2,7 @@ package com.quizsystem.dao;
 
 import com.quizsystem.model.User;
 import com.quizsystem.util.DatabaseConnection;
+import com.quizsystem.util.PasswordUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,17 +24,26 @@ public class UserDao {
      * @throws SQLException If a database error occurs during authentication.
      */
     public User authenticate(String username, String password) throws SQLException {
-        String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+        String query = "SELECT * FROM users WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, username);
-            stmt.setString(2, password); // In production, use hashed passwords
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
+                String storedPassword = rs.getString("password");
+                if (!PasswordUtils.verifyPassword(password, storedPassword)) {
+                    return null;
+                }
+
+                if (!PasswordUtils.isHashed(storedPassword)) {
+                    storedPassword = PasswordUtils.hashPassword(password);
+                    updatePassword(conn, rs.getInt("user_id"), storedPassword);
+                }
+
                 return new User(
                         rs.getInt("user_id"),
                         rs.getString("username"),
-                        rs.getString("password"),
+                        storedPassword,
                         rs.getString("role"),
                         rs.getString("email")
                 );
@@ -53,9 +63,18 @@ public class UserDao {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPassword());
+            stmt.setString(2, PasswordUtils.hashPassword(user.getPassword()));
             stmt.setString(3, user.getRole());
             stmt.setString(4, user.getEmail());
+            stmt.executeUpdate();
+        }
+    }
+
+    private void updatePassword(Connection conn, int userId, String hashedPassword) throws SQLException {
+        String query = "UPDATE users SET password = ? WHERE user_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, hashedPassword);
+            stmt.setInt(2, userId);
             stmt.executeUpdate();
         }
     }

@@ -57,6 +57,17 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <db.url>jdbc:sqlite:target/test-db/quiz-system-test.db</db.url>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
             <!-- JavaFX Plugin -->
             <plugin>
                 <groupId>org.openjfx</groupId>

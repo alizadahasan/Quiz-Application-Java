@@ -2,6 +2,7 @@ package com.quizsystem.dao;
 
 import com.quizsystem.model.Question;
 import com.quizsystem.model.Result;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -12,6 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ResultDaoTest {
 
     private final ResultDao resultDao = new ResultDao();
+
+    @BeforeEach
+    void setUp() throws SQLException {
+        TestDatabaseSupport.resetDatabase();
+    }
 
     @Test
     void createResultRejectsMismatchedAnswerCount() {

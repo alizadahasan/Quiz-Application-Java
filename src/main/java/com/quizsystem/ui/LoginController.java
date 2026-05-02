@@ -1,6 +1,7 @@
 package com.quizsystem.ui;
 
-import com.quizsystem.util.DatabaseConnection;
+import com.quizsystem.model.User;
+import com.quizsystem.service.UserService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -10,9 +11,6 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -37,6 +35,9 @@ public class LoginController {
 
     /** Main application stage for scene transitions. */
     private Stage mainStage;
+
+    /** Service for user authentication and registration. */
+    private final UserService userService = new UserService();
 
     /** Main scene for applying stylesheets. */
     private Scene mainScene;
@@ -150,22 +151,16 @@ public class LoginController {
             return;
         }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT user_id, role FROM users WHERE username = ? AND password = ?")) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            ResultSet rs = stmt.executeQuery();
+        try {
+            User user = userService.login(username, password);
 
-            if (rs.next()) {
-                int userId = rs.getInt("user_id");
-                String role = rs.getString("role");
+            if (user != null) {
                 showMessage("Login successful!", true);
 
-                if ("admin".equals(role)) {
-                    loadAdminDashboard(userId);
-                } else if ("user".equals(role)) {
-                    loadUserDashboard(userId);
+                if ("admin".equals(user.getRole())) {
+                    loadAdminDashboard(user.getUserId());
+                } else if ("user".equals(user.getRole())) {
+                    loadUserDashboard(user.getUserId());
                 } else {
                     showMessage("Invalid user role.", false);
                 }

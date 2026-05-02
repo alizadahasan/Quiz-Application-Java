@@ -1,6 +1,6 @@
 package com.quizsystem.ui;
 
-import com.quizsystem.util.DatabaseConnection;
+import com.quizsystem.service.UserService;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -11,8 +11,6 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -43,6 +41,9 @@ public class RegisterController {
 
     /** Main application stage for scene transitions. */
     private Stage mainStage;
+
+    /** Service for user persistence. */
+    private final UserService userService = new UserService();
 
     /** Main scene for applying stylesheets. */
     private Scene mainScene;
@@ -158,28 +159,17 @@ public class RegisterController {
             return;
         }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)")) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.setString(3, email);
-            stmt.setString(4, role);
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                showMessage("Registration successful! Returning to login...", true);
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(1000);
-                        javafx.application.Platform.runLater(this::handleBackToLogin);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
-            } else {
-                showMessage("Registration failed. Try a different username.", false);
-            }
+        try {
+            userService.register(username, password, role, email);
+            showMessage("Registration successful! Returning to login...", true);
+            new Thread(() -> {
+                try {
+                    Thread.sleep(1000);
+                    javafx.application.Platform.runLater(this::handleBackToLogin);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
         } catch (SQLException e) {
             showMessage("Database error: " + e.getMessage(), false);
             e.printStackTrace();
