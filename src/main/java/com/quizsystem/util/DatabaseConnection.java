@@ -1,18 +1,22 @@
 package com.quizsystem.util;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
 /**
  * Utility class for managing SQLite database connections and initialization.
  */
 public class DatabaseConnection {
     /** Path to the SQLite database file. */
-    private static final String DB_URL = "jdbc:sqlite:quiz_system.db";
+    private static final String DEFAULT_DB_URL = "jdbc:sqlite:quiz_system.db";
+    private static final String DB_URL = loadDatabaseUrl();
 
     /**
      * Establishes a connection to the SQLite database.
@@ -150,6 +154,29 @@ public class DatabaseConnection {
             stmt.setString(3, "admin");
             stmt.setString(4, "admin@quizsystem.local");
             stmt.executeUpdate();
+        }
+    }
+
+    private static String loadDatabaseUrl() {
+        String overriddenUrl = System.getProperty("db.url");
+        if (overriddenUrl != null && !overriddenUrl.isBlank()) {
+            return overriddenUrl;
+        }
+
+        Properties properties = new Properties();
+        try (InputStream inputStream = DatabaseConnection.class.getClassLoader()
+                .getResourceAsStream("application.properties")) {
+            if (inputStream == null) {
+                return DEFAULT_DB_URL;
+            }
+            properties.load(inputStream);
+            String configuredUrl = properties.getProperty("db.url");
+            if (configuredUrl == null || configuredUrl.isBlank()) {
+                return DEFAULT_DB_URL;
+            }
+            return configuredUrl.trim();
+        } catch (IOException e) {
+            return DEFAULT_DB_URL;
         }
     }
 }
