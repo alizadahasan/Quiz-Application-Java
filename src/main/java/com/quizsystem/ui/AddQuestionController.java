@@ -51,6 +51,9 @@ public class AddQuestionController {
     /** ID of the quiz to which the question is added. */
     private int quizId;
 
+    /** ID of the logged-in admin user. */
+    private int adminId;
+
     /** Service for question-related database operations. */
     private QuestionService questionService;
 
@@ -84,6 +87,15 @@ public class AddQuestionController {
     public void setQuizId(int quizId) {
         this.quizId = quizId;
         quizIdField.setText(String.valueOf(quizId));
+    }
+
+    /**
+     * Sets the ID of the logged-in admin user for navigation back to the dashboard.
+     *
+     * @param adminId The ID of the admin user.
+     */
+    public void setAdminId(int adminId) {
+        this.adminId = adminId;
     }
 
     /**
@@ -142,8 +154,9 @@ public class AddQuestionController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/admin.fxml"));
         Parent root = loader.load();
         AdminController controller = loader.getController();
-        controller.setMainStage(mainStage, mainScene);
         Scene newScene = new Scene(root);
+        controller.setMainStage(mainStage, newScene);
+        controller.setAdminId(adminId);
         applyStylesheets(newScene);
         mainStage.setScene(newScene);
         mainStage.setMaximized(true);

@@ -317,9 +317,10 @@ public class AdminController {
         try {
             Parent root = loader.load();
             AddQuestionController controller = loader.getController();
-            controller.setMainStage(mainStage, mainScene);
-            controller.setQuizId(selectedQuiz.getQuizId());
             Scene newScene = new Scene(root);
+            controller.setMainStage(mainStage, newScene);
+            controller.setQuizId(selectedQuiz.getQuizId());
+            controller.setAdminId(adminId);
             applyStylesheets(newScene);
             mainStage.setScene(newScene);
             mainStage.setMaximized(true);
