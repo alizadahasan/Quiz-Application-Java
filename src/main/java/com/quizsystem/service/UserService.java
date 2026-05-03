@@ -44,4 +44,8 @@ public class UserService {
         User user = new User(0, username, password, role, email);
         userDao.createUser(user);
     }
+
+    public boolean isAdminUser(int userId) throws SQLException {
+        return userDao.isAdminUser(userId);
+    }
 }

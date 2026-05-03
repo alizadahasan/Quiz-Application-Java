@@ -1,6 +1,8 @@
 package com.quizsystem.ui;
 
+import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Quiz;
+import com.quizsystem.model.QuizHistoryEntry;
 import com.quizsystem.model.Result;
 import com.quizsystem.service.QuizService;
 import com.quizsystem.service.ResultService;
@@ -292,17 +294,11 @@ public class UserController {
      */
     private void loadQuizHistory() {
         historyListView.getItems().clear();
-        try (var conn = com.quizsystem.util.DatabaseConnection.getConnection();
-             var stmt = conn.prepareStatement(
-                     "SELECT r.result_id, q.title, r.score, r.completion_time "
-                             + "FROM results r JOIN quizzes q ON r.quiz_id = q.quiz_id "
-                             + "WHERE r.user_id = ? ORDER BY r.completion_time DESC, r.result_id DESC")) {
-            stmt.setInt(1, userId);
-            var rs = stmt.executeQuery();
-            while (rs.next()) {
-                String displayText = "Quiz: " + rs.getString("title") + " | Score: " + rs.getInt("score") +
-                        " | Date: " + rs.getString("completion_time");
-                historyListView.getItems().add(new HistoryItem(rs.getInt("result_id"), displayText));
+        try {
+            for (QuizHistoryEntry entry : resultService.getQuizHistoryForUser(userId)) {
+                String displayText = "Quiz: " + entry.quizTitle() + " | Score: " + entry.score() +
+                        " | Date: " + entry.completionTime();
+                historyListView.getItems().add(new HistoryItem(entry.resultId(), displayText));
             }
         } catch (SQLException e) {
             showMessage("Error loading quiz history: " + e.getMessage(), false);
@@ -315,14 +311,11 @@ public class UserController {
      */
     private void loadLeaderboard() {
         leaderboardListView.getItems().clear();
-        try (var conn = com.quizsystem.util.DatabaseConnection.getConnection();
-             var stmt = conn.prepareStatement(
-                     "SELECT u.username, SUM(r.score) as total_score FROM results r JOIN users u ON r.user_id = u.user_id GROUP BY r.user_id ORDER BY total_score DESC LIMIT 10")) {
-            var rs = stmt.executeQuery();
+        try {
             int rank = 1;
-            while (rs.next()) {
+            for (LeaderboardEntry entry : resultService.getGlobalLeaderboard()) {
                 leaderboardListView.getItems().add(
-                        rank++ + ". " + rs.getString("username") + ": " + rs.getInt("total_score"));
+                        rank++ + ". " + entry.username() + ": " + entry.score());
             }
         } catch (SQLException e) {
             showMessage("Error loading leaderboard: " + e.getMessage(), false);

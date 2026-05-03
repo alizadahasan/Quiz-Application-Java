@@ -69,35 +69,44 @@ public class QuizDao {
      */
     public void deleteQuiz(int quizId) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // Delete dependent records from user_answers
-            String deleteUserAnswers = "DELETE FROM user_answers WHERE result_id IN (SELECT result_id FROM results WHERE quiz_id = ?)";
-            try (PreparedStatement stmt = conn.prepareStatement(deleteUserAnswers)) {
-                stmt.setInt(1, quizId);
-                stmt.executeUpdate();
-            }
-
-            // Delete dependent records from results
-            String deleteResults = "DELETE FROM results WHERE quiz_id = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(deleteResults)) {
-                stmt.setInt(1, quizId);
-                stmt.executeUpdate();
-            }
-
-            // Delete dependent records from questions
-            String deleteQuestions = "DELETE FROM questions WHERE quiz_id = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(deleteQuestions)) {
-                stmt.setInt(1, quizId);
-                stmt.executeUpdate();
-            }
-
-            // Delete the quiz
-            String deleteQuiz = "DELETE FROM quizzes WHERE quiz_id = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(deleteQuiz)) {
-                stmt.setInt(1, quizId);
-                int rowsAffected = stmt.executeUpdate();
-                if (rowsAffected == 0) {
-                    throw new SQLException("No quiz found with quiz_id: " + quizId);
+            conn.setAutoCommit(false);
+            try {
+                // Delete dependent records from user_answers
+                String deleteUserAnswers = "DELETE FROM user_answers WHERE result_id IN (SELECT result_id FROM results WHERE quiz_id = ?)";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteUserAnswers)) {
+                    stmt.setInt(1, quizId);
+                    stmt.executeUpdate();
                 }
+
+                // Delete dependent records from results
+                String deleteResults = "DELETE FROM results WHERE quiz_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteResults)) {
+                    stmt.setInt(1, quizId);
+                    stmt.executeUpdate();
+                }
+
+                // Delete dependent records from questions
+                String deleteQuestions = "DELETE FROM questions WHERE quiz_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteQuestions)) {
+                    stmt.setInt(1, quizId);
+                    stmt.executeUpdate();
+                }
+
+                // Delete the quiz
+                String deleteQuiz = "DELETE FROM quizzes WHERE quiz_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteQuiz)) {
+                    stmt.setInt(1, quizId);
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected == 0) {
+                        throw new SQLException("No quiz found with quiz_id: " + quizId);
+                    }
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
             }
         }
     }

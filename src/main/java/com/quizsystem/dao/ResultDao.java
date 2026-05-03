@@ -1,7 +1,9 @@
 package com.quizsystem.dao;
 
+import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Result;
 import com.quizsystem.model.Question;
+import com.quizsystem.model.QuizHistoryEntry;
 import com.quizsystem.util.DatabaseConnection;
 
 import java.sql.*;
@@ -114,5 +116,81 @@ public class ResultDao {
             }
         }
         return result;
+    }
+
+    public List<QuizHistoryEntry> getQuizHistoryByUserId(int userId) throws SQLException {
+        String sql = """
+                SELECT r.result_id, q.title, r.score, r.completion_time
+                FROM results r
+                JOIN quizzes q ON r.quiz_id = q.quiz_id
+                WHERE r.user_id = ?
+                ORDER BY r.completion_time DESC, r.result_id DESC
+                """;
+        List<QuizHistoryEntry> historyEntries = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    historyEntries.add(new QuizHistoryEntry(
+                            rs.getInt("result_id"),
+                            rs.getString("title"),
+                            rs.getInt("score"),
+                            rs.getString("completion_time")
+                    ));
+                }
+            }
+        }
+        return historyEntries;
+    }
+
+    public List<LeaderboardEntry> getGlobalLeaderboard() throws SQLException {
+        String sql = """
+                SELECT u.username, SUM(r.score) AS total_score
+                FROM results r
+                JOIN users u ON r.user_id = u.user_id
+                GROUP BY r.user_id, u.username
+                ORDER BY total_score DESC
+                LIMIT 10
+                """;
+        List<LeaderboardEntry> leaderboardEntries = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                leaderboardEntries.add(new LeaderboardEntry(
+                        rs.getString("username"),
+                        rs.getInt("total_score"),
+                        null
+                ));
+            }
+        }
+        return leaderboardEntries;
+    }
+
+    public List<LeaderboardEntry> getQuizLeaderboard(int quizId) throws SQLException {
+        String sql = """
+                SELECT u.username, r.score, r.completion_time
+                FROM results r
+                JOIN users u ON r.user_id = u.user_id
+                WHERE r.quiz_id = ?
+                ORDER BY r.score DESC
+                LIMIT 10
+                """;
+        List<LeaderboardEntry> leaderboardEntries = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, quizId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    leaderboardEntries.add(new LeaderboardEntry(
+                            rs.getString("username"),
+                            rs.getInt("score"),
+                            rs.getString("completion_time")
+                    ));
+                }
+            }
+        }
+        return leaderboardEntries;
     }
 }

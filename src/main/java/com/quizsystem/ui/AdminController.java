@@ -1,9 +1,12 @@
 package com.quizsystem.ui;
 
+import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Quiz;
 import com.quizsystem.model.QuestionData;
 import com.quizsystem.service.QuizService;
 import com.quizsystem.service.QuestionService;
+import com.quizsystem.service.ResultService;
+import com.quizsystem.service.UserService;
 import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,9 +18,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +63,12 @@ public class AdminController {
     /** Service for question-related database operations. */
     private QuestionService questionService;
 
+    /** Service for result-related database operations. */
+    private ResultService resultService;
+
+    /** Service for user-related database operations. */
+    private UserService userService;
+
     /** Counter for tracking the number of question fields added. */
     private int questionCount = 0;
 
@@ -73,6 +79,8 @@ public class AdminController {
     public void initialize() {
         quizService = new QuizService();
         questionService = new QuestionService();
+        resultService = new ResultService();
+        userService = new UserService();
         setupQuizListView();
         loadQuizzes();
         addDefaultQuestionField();
@@ -356,11 +364,8 @@ public class AdminController {
      * @return True if the user is an admin, false otherwise.
      */
     private boolean isValidUser(int userId) {
-        try (Connection conn = com.quizsystem.util.DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT 1 FROM users WHERE user_id = ? AND role = 'admin'")) {
-            stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
-            return rs.next();
+        try {
+            return userService.isAdminUser(userId);
         } catch (SQLException e) {
             System.err.println("SQLException in isValidUser: " + e.getMessage());
             return false;
@@ -411,16 +416,12 @@ public class AdminController {
         }
 
         leaderboardListView.getItems().clear();
-        try (var conn = com.quizsystem.util.DatabaseConnection.getConnection();
-             var stmt = conn.prepareStatement(
-                     "SELECT u.username, r.score, r.completion_time FROM results r JOIN users u ON r.user_id = u.user_id WHERE r.quiz_id = ? ORDER BY r.score DESC LIMIT 10")) {
-            stmt.setInt(1, selectedQuiz.getQuizId());
-            var rs = stmt.executeQuery();
+        try {
             int rank = 1;
-            while (rs.next()) {
+            for (LeaderboardEntry entry : resultService.getQuizLeaderboard(selectedQuiz.getQuizId())) {
                 leaderboardListView.getItems().add(
-                        rank++ + ". " + rs.getString("username") + ": " + rs.getInt("score") +
-                                " (Date: " + rs.getString("completion_time") + ")");
+                        rank++ + ". " + entry.username() + ": " + entry.score() +
+                                " (Date: " + entry.completionTime() + ")");
             }
             if (leaderboardListView.getItems().isEmpty()) {
                 showMessage("No leaderboard data available for Quiz ID: " + selectedQuiz.getQuizId(), false);

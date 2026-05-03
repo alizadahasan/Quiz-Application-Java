@@ -70,6 +70,17 @@ public class UserDao {
         }
     }
 
+    public boolean isAdminUser(int userId) throws SQLException {
+        String query = "SELECT 1 FROM users WHERE user_id = ? AND role = 'admin'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     private void updatePassword(Connection conn, int userId, String hashedPassword) throws SQLException {
         String query = "UPDATE users SET password = ? WHERE user_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(query)) {

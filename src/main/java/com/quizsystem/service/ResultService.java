@@ -1,7 +1,9 @@
 package com.quizsystem.service;
 
 import com.quizsystem.dao.ResultDao;
+import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Question;
+import com.quizsystem.model.QuizHistoryEntry;
 import com.quizsystem.model.Result;
 
 import java.sql.SQLException;
@@ -46,5 +48,17 @@ public class ResultService {
      */
     public Result getResultById(int resultId) throws SQLException {
         return resultDao.getResultById(resultId);
+    }
+
+    public List<QuizHistoryEntry> getQuizHistoryForUser(int userId) throws SQLException {
+        return resultDao.getQuizHistoryByUserId(userId);
+    }
+
+    public List<LeaderboardEntry> getGlobalLeaderboard() throws SQLException {
+        return resultDao.getGlobalLeaderboard();
+    }
+
+    public List<LeaderboardEntry> getQuizLeaderboard(int quizId) throws SQLException {
+        return resultDao.getQuizLeaderboard(quizId);
     }
 }
