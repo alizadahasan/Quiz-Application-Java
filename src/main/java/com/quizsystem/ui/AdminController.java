@@ -190,7 +190,7 @@ public class AdminController {
      *
      * @return A list of valid QuestionData objects.
      */
-    private List<QuestionData> collectQuestions() {
+    private List<QuestionData> collectQuestions() throws SQLException {
         List<QuestionData> questions = new ArrayList<>();
         int index = 1;
         while (true) {
@@ -213,10 +213,25 @@ public class AdminController {
             String optionD = optionDField.getText().trim();
             String correctAnswer = correctAnswerChoiceBox.getValue();
 
-            if (!questionText.isEmpty() && !optionA.isEmpty() && !optionB.isEmpty() && !optionC.isEmpty() &&
-                    !optionD.isEmpty() && correctAnswer != null && correctAnswer.matches("[A-D]")) {
-                questions.add(new QuestionData(questionText, optionA, optionB, optionC, optionD, correctAnswer));
+            boolean allFieldsEmpty = questionText.isEmpty() && optionA.isEmpty() && optionB.isEmpty()
+                    && optionC.isEmpty() && optionD.isEmpty() && correctAnswer == null;
+            boolean allFieldsPresent = !questionText.isEmpty() && !optionA.isEmpty() && !optionB.isEmpty()
+                    && !optionC.isEmpty() && !optionD.isEmpty() && correctAnswer != null;
+
+            if (allFieldsEmpty) {
+                index++;
+                continue;
             }
+
+            if (!allFieldsPresent) {
+                throw new SQLException("Question " + index + " is incomplete. Fill in the question, all four options, and the correct answer.");
+            }
+
+            if (!correctAnswer.matches("[A-D]")) {
+                throw new SQLException("Question " + index + " has an invalid correct answer. Choose A, B, C, or D.");
+            }
+
+            questions.add(new QuestionData(questionText, optionA, optionB, optionC, optionD, correctAnswer));
             index++;
         }
         return questions;
