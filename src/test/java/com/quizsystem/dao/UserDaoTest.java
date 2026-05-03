@@ -67,4 +67,12 @@ public class UserDaoTest {
             assertTrue(PasswordUtils.isHashed(rs.getString("password")), "Legacy plaintext password should be upgraded");
         }
     }
+
+    @Test
+    void defaultAdminSeedAuthenticatesWithDocumentedCredentials() throws SQLException {
+        User admin = userDao.authenticate("admin", "admin123");
+
+        assertNotNull(admin, "Seeded admin should authenticate");
+        assertEquals("admin", admin.getRole(), "Seeded user should have the admin role");
+    }
 }
