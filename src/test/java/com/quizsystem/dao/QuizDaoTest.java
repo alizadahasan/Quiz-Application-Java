@@ -1,6 +1,7 @@
 package com.quizsystem.dao;
 
 import com.quizsystem.model.Quiz;
+import com.quizsystem.model.QuestionData;
 import com.quizsystem.util.DatabaseConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,8 +10,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class QuizDaoTest {
 
@@ -38,6 +41,16 @@ class QuizDaoTest {
             assertEquals(0, countById(conn, "results", "quiz_id", quiz.getQuizId()));
             assertEquals(0, countById(conn, "user_answers", "result_id", resultId));
         }
+    }
+
+    @Test
+    void createQuizWithQuestionsRejectsNonPositiveTimeLimit() {
+        Quiz quiz = new Quiz(0, "Invalid Quiz", "Should fail", 1, 0);
+        List<QuestionData> questions = List.of(
+                new QuestionData("Question?", "A", "B", "C", "D", "A")
+        );
+
+        assertThrows(SQLException.class, () -> quizDao.createQuizWithQuestions(quiz, questions));
     }
 
     private int insertUser(String username, String email, String role) throws SQLException {

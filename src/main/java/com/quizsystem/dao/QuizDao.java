@@ -21,6 +21,7 @@ public class QuizDao {
      * @throws SQLException If a database error occurs during creation.
      */
     public void createQuiz(Quiz quiz) throws SQLException {
+        validateQuiz(quiz);
         String sql = "INSERT INTO quizzes (title, description, created_by, time_limit) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -71,28 +72,6 @@ public class QuizDao {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                // Delete dependent records from user_answers
-                String deleteUserAnswers = "DELETE FROM user_answers WHERE result_id IN (SELECT result_id FROM results WHERE quiz_id = ?)";
-                try (PreparedStatement stmt = conn.prepareStatement(deleteUserAnswers)) {
-                    stmt.setInt(1, quizId);
-                    stmt.executeUpdate();
-                }
-
-                // Delete dependent records from results
-                String deleteResults = "DELETE FROM results WHERE quiz_id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(deleteResults)) {
-                    stmt.setInt(1, quizId);
-                    stmt.executeUpdate();
-                }
-
-                // Delete dependent records from questions
-                String deleteQuestions = "DELETE FROM questions WHERE quiz_id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(deleteQuestions)) {
-                    stmt.setInt(1, quizId);
-                    stmt.executeUpdate();
-                }
-
-                // Delete the quiz
                 String deleteQuiz = "DELETE FROM quizzes WHERE quiz_id = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(deleteQuiz)) {
                     stmt.setInt(1, quizId);
@@ -127,10 +106,7 @@ public class QuizDao {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                // Validate quiz data
-                if (quiz.getTitle() == null || quiz.getTitle().trim().isEmpty()) {
-                    throw new SQLException("Quiz title cannot be null or empty");
-                }
+                validateQuiz(quiz);
 
                 // Insert quiz
                 String insertQuiz = "INSERT INTO quizzes (title, description, created_by, time_limit) VALUES (?, ?, ?, ?)";
@@ -188,6 +164,18 @@ public class QuizDao {
             } finally {
                 conn.setAutoCommit(true);
             }
+        }
+    }
+
+    private void validateQuiz(Quiz quiz) throws SQLException {
+        if (quiz == null) {
+            throw new SQLException("Quiz cannot be null");
+        }
+        if (quiz.getTitle() == null || quiz.getTitle().trim().isEmpty()) {
+            throw new SQLException("Quiz title cannot be null or empty");
+        }
+        if (quiz.getTimeLimit() <= 0) {
+            throw new SQLException("Quiz time limit must be greater than zero");
         }
     }
 }

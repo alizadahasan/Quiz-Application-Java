@@ -162,6 +162,10 @@ public class AdminController {
 
         try {
             int timeLimitInt = Integer.parseInt(timeLimit);
+            if (timeLimitInt <= 0) {
+                showMessage("Time limit must be greater than zero.", false);
+                return;
+            }
             List<QuestionData> questions = collectQuestions();
             if (questions.isEmpty()) {
                 showMessage("Please add at least one valid question.", false);

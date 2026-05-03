@@ -58,7 +58,7 @@ public class DatabaseConnection {
                     title TEXT NOT NULL,
                     description TEXT,
                     created_by INTEGER,
-                    time_limit INTEGER,
+                    time_limit INTEGER NOT NULL CHECK(time_limit > 0),
                     FOREIGN KEY (created_by) REFERENCES users(user_id)
                 )
             """);
@@ -74,7 +74,7 @@ public class DatabaseConnection {
                     option_c TEXT NOT NULL,
                     option_d TEXT NOT NULL,
                     correct_answer TEXT NOT NULL,
-                    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id)
+                    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id) ON DELETE CASCADE
                 )
             """);
 
@@ -86,7 +86,7 @@ public class DatabaseConnection {
                     user_id INTEGER,
                     score INTEGER NOT NULL,
                     completion_time TEXT,
-                    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id),
+                    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id) ON DELETE CASCADE,
                     FOREIGN KEY (user_id) REFERENCES users(user_id)
                 )
             """);
@@ -98,12 +98,13 @@ public class DatabaseConnection {
                     result_id INTEGER,
                     question_id INTEGER,
                     user_answer TEXT NOT NULL,
-                    FOREIGN KEY (result_id) REFERENCES results(result_id),
-                    FOREIGN KEY (question_id) REFERENCES questions(question_id)
+                    FOREIGN KEY (result_id) REFERENCES results(result_id) ON DELETE CASCADE,
+                    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE
                 )
             """);
 
             ensureUserAnswerColumn(conn);
+            ensureCascadeDeleteSchema(conn);
             seedDefaultAdmin(conn);
         }
     }
@@ -138,6 +139,165 @@ public class DatabaseConnection {
                 stmt.executeUpdate("UPDATE user_answers SET user_answer = selected_answer WHERE user_answer IS NULL");
             }
         }
+    }
+
+    private static void ensureCascadeDeleteSchema(Connection conn) throws SQLException {
+        if (!requiresCascadeMigration(conn)) {
+            return;
+        }
+
+        boolean originalAutoCommit = conn.getAutoCommit();
+        try {
+            conn.setAutoCommit(false);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("PRAGMA foreign_keys = OFF");
+                stmt.execute("DROP TABLE IF EXISTS user_answers_new");
+                stmt.execute("DROP TABLE IF EXISTS results_new");
+                stmt.execute("DROP TABLE IF EXISTS questions_new");
+                stmt.execute("DROP TABLE IF EXISTS quizzes_new");
+
+                stmt.execute("""
+                    CREATE TABLE quizzes_new (
+                        quiz_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        title TEXT NOT NULL,
+                        description TEXT,
+                        created_by INTEGER,
+                        time_limit INTEGER NOT NULL CHECK(time_limit > 0),
+                        FOREIGN KEY (created_by) REFERENCES users(user_id)
+                    )
+                """);
+                stmt.execute("""
+                    INSERT INTO quizzes_new (quiz_id, title, description, created_by, time_limit)
+                    SELECT quiz_id, title, description, created_by,
+                           CASE WHEN time_limit IS NULL OR time_limit <= 0 THEN 1 ELSE time_limit END
+                    FROM quizzes
+                """);
+
+                stmt.execute("""
+                    CREATE TABLE questions_new (
+                        question_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        quiz_id INTEGER,
+                        question_text TEXT NOT NULL,
+                        option_a TEXT NOT NULL,
+                        option_b TEXT NOT NULL,
+                        option_c TEXT NOT NULL,
+                        option_d TEXT NOT NULL,
+                        correct_answer TEXT NOT NULL,
+                        FOREIGN KEY (quiz_id) REFERENCES quizzes_new(quiz_id) ON DELETE CASCADE
+                    )
+                """);
+                stmt.execute("""
+                    INSERT INTO questions_new (
+                        question_id, quiz_id, question_text, option_a, option_b, option_c, option_d, correct_answer
+                    )
+                    SELECT question_id, quiz_id, question_text, option_a, option_b, option_c, option_d, correct_answer
+                    FROM questions
+                """);
+
+                stmt.execute("""
+                    CREATE TABLE results_new (
+                        result_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        quiz_id INTEGER,
+                        user_id INTEGER,
+                        score INTEGER NOT NULL,
+                        completion_time TEXT,
+                        FOREIGN KEY (quiz_id) REFERENCES quizzes_new(quiz_id) ON DELETE CASCADE,
+                        FOREIGN KEY (user_id) REFERENCES users(user_id)
+                    )
+                """);
+                stmt.execute("""
+                    INSERT INTO results_new (result_id, quiz_id, user_id, score, completion_time)
+                    SELECT result_id, quiz_id, user_id, score, completion_time
+                    FROM results
+                """);
+
+                String userAnswerSourceColumn = hasColumn(conn, "user_answers", "user_answer")
+                        ? "user_answer"
+                        : "selected_answer";
+                stmt.execute("""
+                    CREATE TABLE user_answers_new (
+                        answer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        result_id INTEGER,
+                        question_id INTEGER,
+                        user_answer TEXT NOT NULL,
+                        FOREIGN KEY (result_id) REFERENCES results_new(result_id) ON DELETE CASCADE,
+                        FOREIGN KEY (question_id) REFERENCES questions_new(question_id) ON DELETE CASCADE
+                    )
+                """);
+                stmt.execute("""
+                    INSERT INTO user_answers_new (answer_id, result_id, question_id, user_answer)
+                    SELECT answer_id, result_id, question_id, COALESCE(%s, '')
+                    FROM user_answers
+                """.formatted(userAnswerSourceColumn));
+
+                stmt.execute("DROP TABLE user_answers");
+                stmt.execute("DROP TABLE results");
+                stmt.execute("DROP TABLE questions");
+                stmt.execute("DROP TABLE quizzes");
+
+                stmt.execute("ALTER TABLE quizzes_new RENAME TO quizzes");
+                stmt.execute("ALTER TABLE questions_new RENAME TO questions");
+                stmt.execute("ALTER TABLE results_new RENAME TO results");
+                stmt.execute("ALTER TABLE user_answers_new RENAME TO user_answers");
+                stmt.execute("PRAGMA foreign_keys = ON");
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("PRAGMA foreign_keys = ON");
+            }
+            conn.setAutoCommit(originalAutoCommit);
+        }
+    }
+
+    private static boolean requiresCascadeMigration(Connection conn) throws SQLException {
+        return !tableSqlContains(conn, "quizzes", "CHECK(time_limit > 0)")
+                || !foreignKeyContainsCascade(conn, "questions", "quizzes")
+                || !foreignKeyContainsCascade(conn, "results", "quizzes")
+                || !foreignKeyContainsCascade(conn, "user_answers", "results")
+                || !foreignKeyContainsCascade(conn, "user_answers", "questions");
+    }
+
+    private static boolean tableSqlContains(Connection conn, String tableName, String expectedFragment) throws SQLException {
+        String sql = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+                String tableSql = rs.getString("sql");
+                return tableSql != null && tableSql.contains(expectedFragment);
+            }
+        }
+    }
+
+    private static boolean foreignKeyContainsCascade(Connection conn, String tableName, String referencedTable) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("PRAGMA foreign_key_list(%s)".formatted(tableName))) {
+            while (rs.next()) {
+                if (referencedTable.equals(rs.getString("table"))
+                        && "CASCADE".equalsIgnoreCase(rs.getString("on_delete"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasColumn(Connection conn, String tableName, String columnName) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("PRAGMA table_info(%s)".formatted(tableName))) {
+            while (rs.next()) {
+                if (columnName.equals(rs.getString("name"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

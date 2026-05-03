@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS quizzes (
     title TEXT NOT NULL,
     description TEXT,
     created_by INTEGER,
-    time_limit INTEGER,
+    time_limit INTEGER NOT NULL CHECK(time_limit > 0),
     FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS questions (
     option_c TEXT NOT NULL,
     option_d TEXT NOT NULL,
     correct_answer TEXT NOT NULL,
-    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id)
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS results (
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS results (
     score INTEGER NOT NULL,
     completion_time DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id)
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS user_answers (
@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS user_answers (
     result_id INTEGER,
     question_id INTEGER,
     user_answer TEXT NOT NULL,
-    FOREIGN KEY (result_id) REFERENCES results(result_id),
-    FOREIGN KEY (question_id) REFERENCES questions(question_id)
+    FOREIGN KEY (result_id) REFERENCES results(result_id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE
 );
 
 INSERT OR IGNORE INTO users (username, password, role, email)
