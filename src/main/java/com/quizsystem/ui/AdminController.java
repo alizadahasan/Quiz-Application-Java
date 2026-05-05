@@ -7,6 +7,7 @@ import com.quizsystem.service.QuizService;
 import com.quizsystem.service.QuestionService;
 import com.quizsystem.service.ResultService;
 import com.quizsystem.service.UserService;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -207,7 +208,7 @@ public class AdminController {
             showMessage("Time limit must be a number.", false);
         } catch (SQLException e) {
             showMessage("Error creating quiz: " + e.getMessage(), false);
-            System.err.println("SQLException in handleCreateQuiz: " + e.getMessage());
+            AppLogger.error("Error creating quiz", e);
         }
     }
 
@@ -329,7 +330,7 @@ public class AdminController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/addQuestion.fxml"));
         if (loader.getLocation() == null) {
             showMessage("Cannot load question form. Check if addQuestion.fxml exists in src/main/resources/com/quizsystem/ui/", false);
-            System.err.println("Error: addQuestion.fxml not found at /com/quizsystem/ui/addQuestion.fxml");
+            AppLogger.error("FXML resource not found: /com/quizsystem/ui/addQuestion.fxml");
             return;
         }
         try {
@@ -344,7 +345,7 @@ public class AdminController {
             mainStage.setMaximized(true);
         } catch (IOException e) {
             showMessage("Error loading question form: " + e.getMessage(), false);
-            System.err.println("IOException in handleAddQuestion: " + e.getMessage());
+            AppLogger.error("Error loading question form", e);
         }
     }
 
@@ -391,7 +392,7 @@ public class AdminController {
             loadQuizzes();
         } catch (SQLException e) {
             showMessage("Error deleting quiz: " + e.getMessage(), false);
-            System.err.println("SQLException in handleDeleteQuiz: " + e.getMessage());
+            AppLogger.error("Error deleting quiz", e);
         }
     }
 
@@ -405,7 +406,7 @@ public class AdminController {
         try {
             return userService.isAdminUser(userId);
         } catch (SQLException e) {
-            System.err.println("SQLException in isValidUser: " + e.getMessage());
+            AppLogger.error("Error validating admin user", e);
             return false;
         }
     }
@@ -426,7 +427,7 @@ public class AdminController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/viewQuestions.fxml"));
         if (loader.getLocation() == null) {
             showMessage("Cannot load questions view.", false);
-            System.err.println("Error: viewQuestions.fxml not found");
+            AppLogger.error("FXML resource not found: /com/quizsystem/ui/viewQuestions.fxml");
             return;
         }
         Parent root = loader.load();
@@ -468,7 +469,7 @@ public class AdminController {
             }
         } catch (SQLException e) {
             showMessage("Error loading leaderboard: " + e.getMessage(), false);
-            System.err.println("SQLException in handleViewLeaderboard: " + e.getMessage());
+            AppLogger.error("Error loading quiz leaderboard", e);
         }
     }
 
@@ -494,13 +495,13 @@ public class AdminController {
     private void handleLogout() throws IOException {
         if (mainStage == null) {
             showMessage("Cannot load login form: stage not initialized.", false);
-            System.err.println("Error: mainStage is null in handleLogout");
+            AppLogger.error("Cannot load login form: stage not initialized.");
             return;
         }
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/login.fxml"));
         if (loader.getLocation() == null) {
             showMessage("Cannot load login form.", false);
-            System.err.println("Error: login.fxml not found at /com/quizsystem/ui/login.fxml");
+            AppLogger.error("FXML resource not found: /com/quizsystem/ui/login.fxml");
             return;
         }
         Parent root = loader.load();
@@ -530,7 +531,7 @@ public class AdminController {
             quizListView.getItems().addAll(quizService.getAllQuizzes());
         } catch (SQLException e) {
             showMessage("Error loading quizzes: " + e.getMessage(), false);
-            System.err.println("SQLException in loadQuizzes: " + e.getMessage());
+            AppLogger.error("Error loading quizzes", e);
         }
     }
 

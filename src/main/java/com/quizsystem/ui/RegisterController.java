@@ -1,6 +1,7 @@
 package com.quizsystem.ui;
 
 import com.quizsystem.service.UserService;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.ThemeManager;
 import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
@@ -147,7 +148,7 @@ public class RegisterController {
             delay.play();
         } catch (SQLException e) {
             showMessage("Database error: " + e.getMessage(), false);
-            e.printStackTrace();
+            AppLogger.error("Database error during registration", e);
         }
     }
 
@@ -168,7 +169,7 @@ public class RegisterController {
             prepareAndShowScene(root);
         } catch (IOException e) {
             showMessage("Error loading login screen: " + e.getMessage(), false);
-            e.printStackTrace();
+            AppLogger.error("Error loading login screen", e);
         }
     }
 
@@ -192,7 +193,7 @@ public class RegisterController {
         if (loader.getLocation() == null) {
             String errorMessage = "Cannot load FXML file: " + loader.getLocation();
             showMessage(errorMessage, false);
-            System.err.println(errorMessage);
+            AppLogger.error(errorMessage);
             return null;
         }
         return loader.load();
@@ -229,7 +230,7 @@ public class RegisterController {
             messageLabel.setText(message);
             messageLabel.setStyle(success ? "-fx-text-fill: green; -fx-font-weight: bold;" : "-fx-text-fill: red; -fx-font-weight: bold;");
         } else {
-            System.out.println("MessageLabel is null. Message: " + message);
+            AppLogger.warn("MessageLabel is null. Message: " + message);
         }
     }
 }

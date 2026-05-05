@@ -25,7 +25,7 @@ public final class ThemeManager {
         String stylesheet = darkModeEnabled ? DARK_CSS : LIGHT_CSS;
         URL stylesheetUrl = ThemeManager.class.getResource(stylesheet);
         if (stylesheetUrl == null) {
-            System.err.println("Warning: " + stylesheet + " not found.");
+            AppLogger.warn("Stylesheet not found: " + stylesheet);
             return;
         }
 

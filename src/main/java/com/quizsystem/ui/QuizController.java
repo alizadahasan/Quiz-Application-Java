@@ -3,6 +3,7 @@ package com.quizsystem.ui;
 import com.quizsystem.model.Question;
 import com.quizsystem.service.QuestionService;
 import com.quizsystem.service.ResultService;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -177,7 +178,7 @@ public class QuizController {
             }
         } catch (SQLException e) {
             showMessage("Error loading questions: " + e.getMessage(), false);
-            System.err.println("SQLException in loadQuestions: " + e.getMessage());
+            AppLogger.error("Error loading questions", e);
         }
     }
 
@@ -266,7 +267,7 @@ public class QuizController {
             displayQuestion(currentQuestionIndex); // Refresh to show feedback
         } catch (SQLException e) {
             showMessage("Error submitting quiz: " + e.getMessage(), false);
-            System.err.println("SQLException in handleSubmitQuiz: " + e.getMessage());
+            AppLogger.error("Error submitting quiz", e);
             if (e.getMessage().contains("no such table: user_answers")) {
                 showMessage("Database error: user_answers table is missing. Please contact the administrator.", false);
             }

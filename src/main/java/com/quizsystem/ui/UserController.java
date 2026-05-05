@@ -6,6 +6,7 @@ import com.quizsystem.model.QuizHistoryEntry;
 import com.quizsystem.model.Result;
 import com.quizsystem.service.QuizService;
 import com.quizsystem.service.ResultService;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -147,7 +148,7 @@ public class UserController {
                             handleTakeQuiz(quiz.getQuizId());
                         } catch (IOException e) {
                             showMessage("Error loading quiz: " + e.getMessage(), false);
-                            e.printStackTrace();
+                            AppLogger.error("Error loading quiz", e);
                         }
                     });
                     HBox hBox = new HBox(10, label, takeQuizButton);
@@ -176,7 +177,7 @@ public class UserController {
                             handleViewResults(item.resultId);
                         } catch (IOException e) {
                             showMessage("Error loading results: " + e.getMessage(), false);
-                            e.printStackTrace();
+                            AppLogger.error("Error loading results", e);
                         }
                     });
                     HBox hBox = new HBox(10, label, viewResultsButton);
@@ -205,7 +206,7 @@ public class UserController {
     private void handleTakeQuiz(int quizId) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/quiz.fxml"));
         if (loader.getLocation() == null) {
-            System.err.println("quiz.fxml not found at /com/quizsystem/ui/quiz.fxml");
+            AppLogger.error("FXML resource not found: /com/quizsystem/ui/quiz.fxml");
             showMessage("Cannot load quiz form.", false);
             return;
         }
@@ -285,7 +286,7 @@ public class UserController {
             quizListView.getItems().addAll(quizService.getAllQuizzes());
         } catch (SQLException e) {
             showMessage("Error loading quizzes: " + e.getMessage(), false);
-            System.err.println("SQLException in loadQuizzes: " + e.getMessage());
+            AppLogger.error("Error loading quizzes", e);
         }
     }
 
@@ -302,7 +303,7 @@ public class UserController {
             }
         } catch (SQLException e) {
             showMessage("Error loading quiz history: " + e.getMessage(), false);
-            System.err.println("SQLException in loadQuizHistory: " + e.getMessage());
+            AppLogger.error("Error loading quiz history", e);
         }
     }
 
@@ -319,7 +320,7 @@ public class UserController {
             }
         } catch (SQLException e) {
             showMessage("Error loading leaderboard: " + e.getMessage(), false);
-            System.err.println("SQLException in loadLeaderboard: " + e.getMessage());
+            AppLogger.error("Error loading leaderboard", e);
         }
     }
 

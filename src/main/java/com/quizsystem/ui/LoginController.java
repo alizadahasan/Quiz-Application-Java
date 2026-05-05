@@ -2,6 +2,7 @@ package com.quizsystem.ui;
 
 import com.quizsystem.model.User;
 import com.quizsystem.service.UserService;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.ThemeManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -153,10 +154,10 @@ public class LoginController {
             }
         } catch (SQLException e) {
             showMessage("Database error during login: " + e.getMessage(), false);
-            e.printStackTrace();
+            AppLogger.error("Database error during login", e);
         } catch (IOException e) {
             showMessage("Error loading dashboard: " + e.getMessage(), false);
-            e.printStackTrace();
+            AppLogger.error("Error loading dashboard", e);
         }
     }
 
@@ -177,7 +178,7 @@ public class LoginController {
             prepareAndShowScene(root);
         } catch (IOException e) {
             showMessage("Error loading register screen: " + e.getMessage(), false);
-            e.printStackTrace();
+            AppLogger.error("Error loading register screen", e);
         }
     }
 
@@ -235,7 +236,7 @@ public class LoginController {
         if (loader.getLocation() == null) {
             String errorMessage = "Cannot load FXML file: " + loader.getLocation();
             showMessage(errorMessage, false);
-            System.err.println(errorMessage);
+            AppLogger.error(errorMessage);
             return null;
         }
         return loader.load();
@@ -272,7 +273,7 @@ public class LoginController {
             messageLabel.setText(message);
             messageLabel.setStyle(success ? "-fx-text-fill: green; -fx-font-weight: bold;" : "-fx-text-fill: red; -fx-font-weight: bold;");
         } else {
-            System.out.println("MessageLabel is null. Message: " + message);
+            AppLogger.warn("MessageLabel is null. Message: " + message);
         }
     }
 }

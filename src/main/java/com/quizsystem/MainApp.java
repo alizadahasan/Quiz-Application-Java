@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import com.quizsystem.ui.LoginController;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.DatabaseConnection;
 import com.quizsystem.util.ThemeManager;
 
@@ -34,7 +35,7 @@ public class MainApp extends Application {
 
         URL loginResource = getClass().getResource("/com/quizsystem/ui/login.fxml");
         if (loginResource == null) {
-            System.err.println("Error: login.fxml not found at /com/quizsystem/ui/login.fxml");
+            AppLogger.error("FXML resource not found: /com/quizsystem/ui/login.fxml");
             throw new IOException("Cannot find login.fxml");
         }
         FXMLLoader loader = new FXMLLoader(loginResource);

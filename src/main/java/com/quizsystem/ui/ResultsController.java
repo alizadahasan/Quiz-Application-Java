@@ -4,6 +4,7 @@ import com.quizsystem.model.Question;
 import com.quizsystem.model.Result;
 import com.quizsystem.service.QuestionService;
 import com.quizsystem.service.ResultService;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -117,7 +118,7 @@ public class ResultsController {
             }
         } catch (SQLException e) {
             showMessage("Error loading results: " + e.getMessage(), false);
-            System.err.println("SQLException in loadResults: " + e.getMessage());
+            AppLogger.error("Error loading results", e);
         }
     }
 
@@ -150,7 +151,7 @@ public class ResultsController {
             mainStage.setMaximized(true);
         } catch (SQLException e) {
             showMessage("Error retrieving user ID: " + e.getMessage(), false);
-            System.err.println("SQLException in handleBackToDashboard: " + e.getMessage());
+            AppLogger.error("Error retrieving result owner for dashboard navigation", e);
             return;
         }
     }

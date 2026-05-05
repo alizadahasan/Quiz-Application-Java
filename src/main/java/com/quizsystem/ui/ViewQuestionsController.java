@@ -2,6 +2,7 @@ package com.quizsystem.ui;
 
 import com.quizsystem.model.Question;
 import com.quizsystem.service.QuestionService;
+import com.quizsystem.util.AppLogger;
 import com.quizsystem.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -122,7 +123,7 @@ public class ViewQuestionsController {
             }
         } catch (SQLException e) {
             showMessage("Error loading questions: " + e.getMessage(), false);
-            System.err.println("SQLException in loadQuestions: " + e.getMessage());
+            AppLogger.error("Error loading quiz questions", e);
         }
     }
 
@@ -136,7 +137,7 @@ public class ViewQuestionsController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/quizsystem/ui/admin.fxml"));
         if (loader.getLocation() == null) {
             showMessage("Cannot load admin dashboard.", false);
-            System.err.println("Error: admin.fxml not found");
+            AppLogger.error("FXML resource not found: /com/quizsystem/ui/admin.fxml");
             return;
         }
         Parent root = loader.load();
