@@ -2,6 +2,7 @@ package com.quizsystem.ui;
 
 import com.quizsystem.service.UserService;
 import com.quizsystem.util.ThemeManager;
+import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -9,6 +10,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -140,14 +142,9 @@ public class RegisterController {
         try {
             userService.register(username, password, role, email);
             showMessage("Registration successful! Returning to login...", true);
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1000);
-                    javafx.application.Platform.runLater(this::handleBackToLogin);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }).start();
+            PauseTransition delay = new PauseTransition(Duration.seconds(1));
+            delay.setOnFinished(event -> handleBackToLogin());
+            delay.play();
         } catch (SQLException e) {
             showMessage("Database error: " + e.getMessage(), false);
             e.printStackTrace();

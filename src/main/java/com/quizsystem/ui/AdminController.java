@@ -72,6 +72,31 @@ public class AdminController {
     /** Counter for tracking the number of question fields added. */
     private int questionCount = 0;
 
+    /** Tracks question rows without relying on node lookup and generated IDs. */
+    private final List<QuestionFormRow> questionRows = new ArrayList<>();
+
+    private static final class QuestionFormRow {
+        private final TextArea questionTextField;
+        private final TextField optionAField;
+        private final TextField optionBField;
+        private final TextField optionCField;
+        private final TextField optionDField;
+        private final ChoiceBox<String> correctAnswerChoiceBox;
+        private final HBox container;
+
+        private QuestionFormRow(TextArea questionTextField, TextField optionAField, TextField optionBField,
+                                TextField optionCField, TextField optionDField,
+                                ChoiceBox<String> correctAnswerChoiceBox, HBox container) {
+            this.questionTextField = questionTextField;
+            this.optionAField = optionAField;
+            this.optionBField = optionBField;
+            this.optionCField = optionCField;
+            this.optionDField = optionDField;
+            this.correctAnswerChoiceBox = correctAnswerChoiceBox;
+            this.container = container;
+        }
+    }
+
     /**
      * Initializes the controller after FXML loading, setting up services and UI components.
      */
@@ -176,6 +201,7 @@ public class AdminController {
             loadQuizzes();
             clearQuizFields();
             questionsContainer.getChildren().clear();
+            questionRows.clear();
             addDefaultQuestionField();
         } catch (NumberFormatException e) {
             showMessage("Time limit must be a number.", false);
@@ -192,26 +218,15 @@ public class AdminController {
      */
     private List<QuestionData> collectQuestions() throws SQLException {
         List<QuestionData> questions = new ArrayList<>();
-        int index = 1;
-        while (true) {
-            TextArea questionTextField = (TextArea) questionsContainer.lookup("#questionTextField" + index);
-            TextField optionAField = (TextField) questionsContainer.lookup("#optionAField" + index);
-            TextField optionBField = (TextField) questionsContainer.lookup("#optionBField" + index);
-            TextField optionCField = (TextField) questionsContainer.lookup("#optionCField" + index);
-            TextField optionDField = (TextField) questionsContainer.lookup("#optionDField" + index);
-            ChoiceBox<String> correctAnswerChoiceBox = (ChoiceBox<String>) questionsContainer.lookup("#correctAnswerChoiceBox" + index);
-
-            if (questionTextField == null || optionAField == null || optionBField == null ||
-                    optionCField == null || optionDField == null || correctAnswerChoiceBox == null) {
-                break; // No more question fields
-            }
-
-            String questionText = questionTextField.getText().trim();
-            String optionA = optionAField.getText().trim();
-            String optionB = optionBField.getText().trim();
-            String optionC = optionCField.getText().trim();
-            String optionD = optionDField.getText().trim();
-            String correctAnswer = correctAnswerChoiceBox.getValue();
+        for (int rowIndex = 0; rowIndex < questionRows.size(); rowIndex++) {
+            QuestionFormRow row = questionRows.get(rowIndex);
+            int questionNumber = rowIndex + 1;
+            String questionText = row.questionTextField.getText().trim();
+            String optionA = row.optionAField.getText().trim();
+            String optionB = row.optionBField.getText().trim();
+            String optionC = row.optionCField.getText().trim();
+            String optionD = row.optionDField.getText().trim();
+            String correctAnswer = row.correctAnswerChoiceBox.getValue();
 
             boolean allFieldsEmpty = questionText.isEmpty() && optionA.isEmpty() && optionB.isEmpty()
                     && optionC.isEmpty() && optionD.isEmpty() && correctAnswer == null;
@@ -219,20 +234,18 @@ public class AdminController {
                     && !optionC.isEmpty() && !optionD.isEmpty() && correctAnswer != null;
 
             if (allFieldsEmpty) {
-                index++;
                 continue;
             }
 
             if (!allFieldsPresent) {
-                throw new SQLException("Question " + index + " is incomplete. Fill in the question, all four options, and the correct answer.");
+                throw new SQLException("Question " + questionNumber + " is incomplete. Fill in the question, all four options, and the correct answer.");
             }
 
             if (!correctAnswer.matches("[A-D]")) {
-                throw new SQLException("Question " + index + " has an invalid correct answer. Choose A, B, C, or D.");
+                throw new SQLException("Question " + questionNumber + " has an invalid correct answer. Choose A, B, C, or D.");
             }
 
             questions.add(new QuestionData(questionText, optionA, optionB, optionC, optionD, correctAnswer));
-            index++;
         }
         return questions;
     }
@@ -243,8 +256,9 @@ public class AdminController {
     @FXML
     private void handleAddQuestionField() {
         questionCount++;
-        HBox questionBox = createQuestionField(questionCount);
-        questionsContainer.getChildren().add(questionBox);
+        QuestionFormRow questionRow = createQuestionField(questionCount);
+        questionRows.add(questionRow);
+        questionsContainer.getChildren().add(questionRow.container);
     }
 
     /**
@@ -253,37 +267,39 @@ public class AdminController {
      * @param index The index of the question (used for ID generation).
      * @return An HBox containing question input fields.
      */
-    private HBox createQuestionField(int index) {
+    private QuestionFormRow createQuestionField(int index) {
         HBox hBox = new HBox(10);
         TextArea questionTextField = new TextArea();
-        questionTextField.setId("questionTextField" + index);
         questionTextField.setPromptText("Question " + index + " Text");
         questionTextField.setPrefWidth(300);
         questionTextField.setPrefHeight(50);
         TextField optionAField = new TextField();
-        optionAField.setId("optionAField" + index);
         optionAField.setPromptText("Option A");
         optionAField.setPrefWidth(100);
         TextField optionBField = new TextField();
-        optionBField.setId("optionBField" + index);
         optionBField.setPromptText("Option B");
         optionBField.setPrefWidth(100);
         TextField optionCField = new TextField();
-        optionCField.setId("optionCField" + index);
         optionCField.setPromptText("Option C");
         optionCField.setPrefWidth(100);
         TextField optionDField = new TextField();
-        optionDField.setId("optionDField" + index);
         optionDField.setPromptText("Option D");
         optionDField.setPrefWidth(100);
         Label correctAnswerLabel = new Label("Select Correct Answer:");
         correctAnswerLabel.getStyleClass().add("question-label");
         ChoiceBox<String> correctAnswerChoiceBox = new ChoiceBox<>();
-        correctAnswerChoiceBox.setId("correctAnswerChoiceBox" + index);
         correctAnswerChoiceBox.getItems().addAll("A", "B", "C", "D");
         correctAnswerChoiceBox.setPrefWidth(50);
         hBox.getChildren().addAll(questionTextField, optionAField, optionBField, optionCField, optionDField, correctAnswerLabel, correctAnswerChoiceBox);
-        return hBox;
+        return new QuestionFormRow(
+                questionTextField,
+                optionAField,
+                optionBField,
+                optionCField,
+                optionDField,
+                correctAnswerChoiceBox,
+                hBox
+        );
     }
 
     /**
@@ -291,8 +307,10 @@ public class AdminController {
      */
     private void addDefaultQuestionField() {
         questionCount = 1; // Initialize with one question field
-        HBox defaultQuestionBox = createQuestionField(1);
-        questionsContainer.getChildren().add(defaultQuestionBox);
+        questionRows.clear();
+        QuestionFormRow defaultQuestionRow = createQuestionField(1);
+        questionRows.add(defaultQuestionRow);
+        questionsContainer.getChildren().add(defaultQuestionRow.container);
     }
 
     /**
