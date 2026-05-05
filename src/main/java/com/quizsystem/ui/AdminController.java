@@ -2,6 +2,7 @@ package com.quizsystem.ui;
 
 import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Quiz;
+import com.quizsystem.model.QuizAnalyticsSummary;
 import com.quizsystem.model.QuestionData;
 import com.quizsystem.service.QuizService;
 import com.quizsystem.service.QuestionService;
@@ -20,6 +21,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,6 +74,8 @@ public class AdminController {
 
     /** Counter for tracking the number of question fields added. */
     private int questionCount = 0;
+
+    private static final DecimalFormat SCORE_FORMAT = new DecimalFormat("0.00");
 
     /** Tracks question rows without relying on node lookup and generated IDs. */
     private final List<QuestionFormRow> questionRows = new ArrayList<>();
@@ -483,7 +487,30 @@ public class AdminController {
             showMessage("Please select a quiz to view analytics.", false);
             return;
         }
-        showMessage("Analytics not implemented yet for Quiz ID: " + selectedQuiz.getQuizId(), false);
+
+        leaderboardListView.getItems().clear();
+        try {
+            int questionCount = questionService.getQuestionsByQuizId(selectedQuiz.getQuizId()).size();
+            QuizAnalyticsSummary analytics = resultService.getQuizAnalytics(selectedQuiz.getQuizId());
+
+            leaderboardListView.getItems().add("Quiz: " + selectedQuiz.getTitle());
+            leaderboardListView.getItems().add("Questions: " + questionCount);
+            leaderboardListView.getItems().add("Attempts: " + analytics.attemptCount());
+            leaderboardListView.getItems().add("Participants: " + analytics.participantCount());
+            leaderboardListView.getItems().add("Highest Score: " + analytics.highestScore());
+            leaderboardListView.getItems().add("Average Score: " + SCORE_FORMAT.format(analytics.averageScore()));
+            if (questionCount > 0) {
+                double averagePercent = (analytics.averageScore() / questionCount) * 100.0;
+                leaderboardListView.getItems().add("Average Accuracy: " + SCORE_FORMAT.format(averagePercent) + "%");
+            }
+            leaderboardListView.getItems().add("Latest Completion: "
+                    + (analytics.latestCompletionTime() == null ? "No attempts yet" : analytics.latestCompletionTime()));
+
+            showMessage("Analytics loaded successfully.", true);
+        } catch (SQLException e) {
+            showMessage("Error loading analytics: " + e.getMessage(), false);
+            AppLogger.error("Error loading quiz analytics", e);
+        }
     }
 
     /**

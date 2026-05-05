@@ -2,6 +2,7 @@ package com.quizsystem.dao;
 
 import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Question;
+import com.quizsystem.model.QuizAnalyticsSummary;
 import com.quizsystem.model.QuizHistoryEntry;
 import com.quizsystem.model.Result;
 import com.quizsystem.util.DatabaseConnection;
@@ -91,6 +92,30 @@ class ResultDaoTest {
         assertEquals("alice", quizLeaderboard.getFirst().username());
         assertEquals(1, quizLeaderboard.getFirst().score());
         assertEquals("2026-05-04 12:00:00", quizLeaderboard.getFirst().completionTime());
+    }
+
+    @Test
+    void quizAnalyticsReturnsAggregateMetrics() throws SQLException {
+        int userOneId = insertUser("analytics-alice", "analytics-alice@example.com");
+        int userTwoId = insertUser("analytics-bob", "analytics-bob@example.com");
+        int quizId = insertQuiz(userOneId, "Analytics Quiz");
+        Question question = insertQuestion(quizId, "Question?", "A", "B", "C", "D", "A");
+
+        Result first = new Result(0, quizId, userOneId, 1, "2026-05-05 09:00:00");
+        first.setUserAnswers(List.of("A"));
+        resultDao.createResult(first, List.of(question));
+
+        Result second = new Result(0, quizId, userTwoId, 0, "2026-05-05 09:05:00");
+        second.setUserAnswers(List.of("B"));
+        resultDao.createResult(second, List.of(question));
+
+        QuizAnalyticsSummary analytics = resultDao.getQuizAnalytics(quizId);
+
+        assertEquals(2, analytics.attemptCount());
+        assertEquals(2, analytics.participantCount());
+        assertEquals(1, analytics.highestScore());
+        assertEquals(0.5, analytics.averageScore(), 0.0001);
+        assertEquals("2026-05-05 09:05:00", analytics.latestCompletionTime());
     }
 
     private int insertUser(String username, String email) throws SQLException {

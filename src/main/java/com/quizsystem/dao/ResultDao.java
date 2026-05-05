@@ -3,6 +3,7 @@ package com.quizsystem.dao;
 import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Result;
 import com.quizsystem.model.Question;
+import com.quizsystem.model.QuizAnalyticsSummary;
 import com.quizsystem.model.QuizHistoryEntry;
 import com.quizsystem.util.DatabaseConnection;
 
@@ -192,5 +193,33 @@ public class ResultDao {
             }
         }
         return leaderboardEntries;
+    }
+
+    public QuizAnalyticsSummary getQuizAnalytics(int quizId) throws SQLException {
+        String sql = """
+                SELECT COUNT(*) AS attempt_count,
+                       COUNT(DISTINCT user_id) AS participant_count,
+                       COALESCE(MAX(score), 0) AS highest_score,
+                       COALESCE(AVG(score), 0) AS average_score,
+                       MAX(completion_time) AS latest_completion_time
+                FROM results
+                WHERE quiz_id = ?
+                """;
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, quizId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) {
+                    return new QuizAnalyticsSummary(0, 0, 0, 0.0, null);
+                }
+                return new QuizAnalyticsSummary(
+                        rs.getInt("attempt_count"),
+                        rs.getInt("participant_count"),
+                        rs.getInt("highest_score"),
+                        rs.getDouble("average_score"),
+                        rs.getString("latest_completion_time")
+                );
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.quizsystem.service;
 import com.quizsystem.dao.ResultDao;
 import com.quizsystem.model.LeaderboardEntry;
 import com.quizsystem.model.Question;
+import com.quizsystem.model.QuizAnalyticsSummary;
 import com.quizsystem.model.QuizHistoryEntry;
 import com.quizsystem.model.Result;
 
@@ -60,5 +61,9 @@ public class ResultService {
 
     public List<LeaderboardEntry> getQuizLeaderboard(int quizId) throws SQLException {
         return resultDao.getQuizLeaderboard(quizId);
+    }
+
+    public QuizAnalyticsSummary getQuizAnalytics(int quizId) throws SQLException {
+        return resultDao.getQuizAnalytics(quizId);
     }
 }
